@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBell 🔔 - Pengingat Belajar SMA Kelas 10</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        schoolNavy: '#1e3a8a',
+                        schoolGold: '#f59e0b',
+                        chalkboard: '#1b382b',
+                        chalkGreen: '#2d5a44',
+                        chalkYellow: '#fef08a',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Kalam:wght@700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .handwriting { font-family: 'Kalam', cursive; }
+        .chalkboard-texture {
+            background-color: #1b382b;
+            background-image: radial-gradient(#2d5a44 1px, transparent 0);
+            background-size: 16px 16px;
+        }
+        .corkboard {
+            background-color: #d97706;
+            background-image: radial-gradient(#b45309 2px, transparent 0);
+            background-size: 12px 12px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- CUSTOM TOAST NOTIFICATION -->
+    <div id="toastNotification" class="fixed top-5 right-5 z-50 transform -translate-y-[200%] transition-transform duration-300 ease-in-out bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 pointer-events-none">
+        <i data-lucide="bell" id="toastIcon" class="w-5 h-5 text-schoolGold animate-bounce"></i>
+        <span id="toastMessage" class="text-sm font-semibold">Notifikasi</span>
+    </div>
+
+    <!-- MAIN NAVBAR -->
+    <header class="bg-schoolNavy text-white shadow-md border-b-4 border-schoolGold sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-schoolGold p-2 rounded-2xl text-slate-900 shadow-inner">
+                    <i data-lucide="bell" class="w-7 h-7 fill-current"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-wide flex items-center gap-2">
+                        StudyBell <span class="text-xs bg-schoolGold text-slate-900 px-2.5 py-0.5 rounded-full font-extrabold uppercase tracking-wider">Kelas 10</span>
+                    </h1>
+                    <p class="text-xs text-blue-200 hidden sm:block">Organisator Belajar & Pengingat Tugas Sekolah</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-400/40 px-3 py-1.5 rounded-full text-xs font-bold" title="Streak Belajar Harian">
+                    <i data-lucide="flame" class="w-4 h-4 text-amber-400 fill-amber-400"></i>
+                    <span id="userStreak">1 Hari Streak</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="bg-white border-b border-slate-200 sticky top-[65px] z-20 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 flex gap-2 overflow-x-auto scrollbar-none py-1">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-schoolNavy text-schoolNavy flex items-center gap-2 whitespace-nowrap transition">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Mading & Utama
+            </button>
+            <button onclick="switchTab('schedule')" id="tab-schedule" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-schoolNavy flex items-center gap-2 whitespace-nowrap transition">
+                <i data-lucide="calendar" class="w-4 h-4"></i> Jadwal Pelajaran
+            </button>
+            <button onclick="switchTab('tasks')" id="tab-tasks" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-schoolNavy flex items-center gap-2 whitespace-nowrap transition">
+                <i data-lucide="check-square" class="w-4 h-4"></i> Tugas & PR
+            </button>
+            <button onclick="switchTab('study')" id="tab-study" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-schoolNavy flex items-center gap-2 whitespace-nowrap transition">
+                <i data-lucide="timer" class="w-4 h-4"></i> Bel Sekolah & Fokus
+            </button>
+            <button onclick="switchTab('notes')" id="tab-notes" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-schoolNavy flex items-center gap-2 whitespace-nowrap transition">
+                <i data-lucide="pen-tool" class="w-4 h-4"></i> Catatan & Sketsa
+            </button>
+            <button onclick="switchTab('reports')" id="tab-reports" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-schoolNavy flex items-center gap-2 whitespace-nowrap transition">
+                <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Laporan Belajar
+            </button>
+        </div>
+    </nav>
+
+    <!-- CONTENT BODY -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- 1. DASHBOARD VIEW -->
+        <section id="view-dashboard" class="space-y-6">
+            <!-- Papan Tulis Header -->
+            <div class="chalkboard-texture rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl border-4 border-amber-900/60">
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 bg-emerald-800/80 text-emerald-200 px-3 py-1 rounded-full text-xs font-semibold mb-2 border border-emerald-600">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Ringkasan Belajar Hari Ini
+                        </div>
+                        <h2 class="text-3xl sm:text-4xl font-bold text-chalkYellow tracking-wide handwriting">Selamat Belajar, Siswa Kelas 10! 👋</h2>
+                        <p class="text-emerald-100 mt-2 max-w-xl text-sm sm:text-base">
+                            "Pendidikan adalah senjata paling mematikan di dunia, karena dengan pendidikan Anda dapat mengubah dunia."
+                        </p>
+                    </div>
+
+                    <div class="bg-chalkGreen/90 p-4 rounded-2xl border border-emerald-500/30 flex items-center gap-4 shadow-lg min-w-[240px]">
+                        <div class="p-3 bg-schoolGold rounded-xl text-slate-900 animate-bounce">
+                            <i data-lucide="bell" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-emerald-200">Pengingat Terdekat</div>
+                            <div id="dashNextDeadline" class="font-bold text-white text-sm mt-0.5">Tidak ada deadline terdekat</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Konten Dashboard -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Jadwal Hari Ini -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i data-lucide="book-open" class="w-5 h-5 text-schoolNavy"></i> Mapel Hari Ini
+                            </h3>
+                            <span id="currentDayBadge" class="text-xs font-bold bg-blue-100 text-schoolNavy px-2.5 py-1 rounded-full">Hari Ini</span>
+                        </div>
+                        <div id="dashScheduleList" class="space-y-2.5">
+                            <p class="text-xs text-slate-400 text-center py-6">Tidak ada jadwal pelajaran untuk hari ini.</p>
+                        </div>
+                    </div>
+                    <button onclick="switchTab('schedule')" class="mt-4 text-xs font-bold text-schoolNavy hover:underline flex items-center justify-center gap-1 w-full pt-3 border-t border-slate-100">
+                        Lihat Semua Jadwal <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Corkboard Mading PR & Ulangan -->
+                <div class="corkboard p-5 rounded-2xl shadow-md border-4 border-amber-900/40 md:col-span-2 relative text-amber-950">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-amber-800/30">
+                        <h3 class="font-bold text-lg flex items-center gap-2 text-amber-950 font-sans">
+                            <i data-lucide="pin" class="w-5 h-5 text-red-600 fill-red-600"></i> Mading PR & Ulangan
+                        </h3>
+                        <button onclick="openAddTaskModal()" class="px-3 py-1.5 bg-amber-900 hover:bg-amber-950 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow transition">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Tambah Pengingat
+                        </button>
+                    </div>
+
+                    <div id="dashTaskList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <p class="text-xs text-amber-900/60 text-center py-6 font-medium col-span-full">Belum ada PR atau Ulangan. Klik tombol Tambah untuk membuat pengingat!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. JADWAL PELAJARAN VIEW -->
+        <section id="view-schedule" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-5 h-5 text-schoolNavy"></i> Jadwal Pelajaran Mingguan
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">Atur mata pelajaran harianmu dari Senin sampai Jumat</p>
+                </div>
+                <button onclick="openAddScheduleModal()" class="px-4 py-2 bg-schoolNavy text-white font-bold rounded-xl hover:bg-blue-900 transition flex items-center gap-2 text-xs shadow-md w-fit">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Tambah Pelajaran
+                </button>
+            </div>
+
+            <!-- Grid Hari Pelajaran -->
+            <div id="weeklyScheduleGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- Javascript rendered -->
+            </div>
+        </section>
+
+        <!-- 3. TUGAS & PR VIEW -->
+        <section id="view-tasks" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="check-square" class="w-5 h-5 text-schoolNavy"></i> Daftar Tugas & Ulangan
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">Kelola tugas PR, persiapan ulangan, dan laporan harian</p>
+                </div>
+                <button onclick="openAddTaskModal()" class="px-4 py-2 bg-schoolNavy text-white font-bold rounded-xl hover:bg-blue-900 transition flex items-center gap-2 text-xs shadow-md w-fit">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Tambah Tugas Baru
+                </button>
+            </div>
+
+            <div class="flex gap-2 overflow-x-auto pb-1">
+                <button onclick="filterTasks('all', event)" class="task-filter px-3 py-1.5 rounded-full text-xs font-bold bg-slate-200 text-slate-800 transition">Semua</button>
+                <button onclick="filterTasks('PR', event)" class="task-filter px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:bg-slate-200 transition">PR Besok</button>
+                <button onclick="filterTasks('Ulangan', event)" class="task-filter px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:bg-slate-200 transition">Ulangan</button>
+                <button onclick="filterTasks('Tugas', event)" class="task-filter px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:bg-slate-200 transition">Tugas Biasa</button>
+            </div>
+
+            <div id="tasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- 4. BEL SEKOALAH & TIMER FOKUS VIEW -->
+        <section id="view-study" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Timer Pomodoro Belajar -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center justify-between">
+                    <div class="w-full">
+                        <div class="inline-flex items-center gap-2 bg-blue-50 text-schoolNavy px-3 py-1 rounded-full text-xs font-bold border border-blue-200 mb-4">
+                            <i data-lucide="clock" class="w-4 h-4"></i> Timer Sesi Belajar
+                        </div>
+                        <h3 class="font-bold text-slate-800 text-lg">Waktu Belajar Fokus</h3>
+                        <p class="text-xs text-slate-500 mt-1">Bel sekolah akan berbunyi otomatis saat waktu habis!</p>
+                    </div>
+
+                    <div class="my-8">
+                        <div id="timerDisplay" class="text-6xl font-extrabold text-schoolNavy font-mono tracking-tight">25:00</div>
+                    </div>
+
+                    <div class="flex items-center gap-3 w-full max-w-xs">
+                        <button onclick="toggleTimer()" id="btnStartTimer" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-md text-sm">
+                            <i data-lucide="play" class="w-4 h-4"></i> Mulai Belajar
+                        </button>
+                        <button onclick="resetTimer()" class="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition shadow-sm" title="Reset Timer">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Suara Bel Sekolah & Pengingat -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i data-lucide="bell-ring" class="w-5 h-5 text-schoolGold"></i> Simulasi Bel Sekolah
+                            </h3>
+                            <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">Audio Synthesizer</span>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed mb-6">
+                            Gunakan bel otomatis ini untuk menandai waktu mulai belajar, istirahat, atau pengingat ganti mata pelajaran mandiri.
+                        </p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button onclick="playSchoolBellSound()" class="w-full py-3 bg-schoolGold hover:bg-amber-500 text-slate-900 font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-md text-sm">
+                            <i data-lucide="volume-2" class="w-5 h-5"></i> Bunyikan Bel Sekolah Sekarang 🔔
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. CATATAN & BOARD SKETSA VIEW -->
+        <section id="view-notes" class="hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Quick Notes Text -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+                            <i data-lucide="file-text" class="w-5 h-5 text-schoolNavy"></i> Catatan Cepat
+                        </h3>
+                        <div class="space-y-3">
+                            <input type="text" id="noteTitle" placeholder="Judul Catatan..." class="w-full text-xs font-bold p-3 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none focus:border-schoolNavy">
+                            <textarea id="noteContent" rows="4" placeholder="Tuliskan materi ringkas, rumus, atau pengingat..." class="w-full text-xs p-3 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none focus:border-schoolNavy"></textarea>
+                            <button onclick="saveNote()" class="px-4 py-2 bg-schoolNavy text-white font-bold rounded-xl text-xs hover:bg-blue-900 transition flex items-center gap-1 shadow-sm">
+                                <i data-lucide="save" class="w-4 h-4"></i> Simpan Catatan
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <h4 class="text-xs font-bold text-slate-700 mb-2">Daftar Catatan Tersimpan:</h4>
+                        <div id="notesSavedList" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            <!-- Rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Papan Coretan & Sketsa (Sketch Canvas) -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i data-lucide="pen-tool" class="w-5 h-5 text-schoolNavy"></i> Papan Sketsa Coretan Rumus
+                            </h3>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="sketchColor" value="#1e3a8a" class="w-7 h-7 rounded cursor-pointer border-0">
+                                <button onclick="clearCanvas()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                                    <i data-lucide="eraser" class="w-3.5 h-3.5"></i> Bersihkan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-64 border-2 border-dashed border-slate-300 rounded-xl overflow-hidden bg-slate-50 relative">
+                        <canvas id="sketchCanvas" class="w-full h-full cursor-crosshair touch-none"></canvas>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-2 text-center">Gunakan tetikus/sentuhan untuk mencoret-coret rumus atau catatan visual cepat</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. LAPORAN & GAMIFIKASI VIEW -->
+        <section id="view-reports" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Grafik Tugas -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-schoolNavy"></i> Progress Penyelesaian Tugas
+                    </h3>
+                    <div class="h-56 relative flex items-center justify-center">
+                        <canvas id="chartTaskStatus"></canvas>
+                    </div>
+                </div>
+
+                <!-- Misi Harian & Streak -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+                            <i data-lucide="award" class="w-5 h-5 text-schoolGold"></i> Misi Harian Belajar
+                        </h3>
+
+                        <div class="space-y-3">
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <input type="checkbox" onchange="toggleQuest(1)" class="w-4 h-4 accent-schoolNavy rounded">
+                                    <div>
+                                        <div class="font-bold text-xs text-slate-800">Selesaikan 1 PR / Tugas</div>
+                                        <div class="text-[10px] text-slate-500">+50 XP Belajar</div>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">Bonus</span>
+                            </div>
+
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <input type="checkbox" onchange="toggleQuest(2)" class="w-4 h-4 accent-schoolNavy rounded">
+                                    <div>
+                                        <div class="font-bold text-xs text-slate-800">Belajar Fokus 25 Menit</div>
+                                        <div class="text-[10px] text-slate-500">+100 XP Belajar</div>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">Fokus</span>
+                            </div>
+
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <input type="checkbox" onchange="toggleQuest(3)" class="w-4 h-4 accent-schoolNavy rounded">
+                                    <div>
+                                        <div class="font-bold text-xs text-slate-800">Cek Jadwal Pelajaran Besok</div>
+                                        <div class="text-[10px] text-slate-500">+30 XP Belajar</div>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">Disiplin</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 py-4 text-center text-xs border-t border-slate-800 mt-8">
+        <p>StudyBell 🔔 - Aplikasi Pengingat Belajar Sekolah Kelas 10</p>
+    </footer>
+
+    <!-- MODAL: TAMBAH JADWAL -->
+    <div id="scheduleModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-schoolNavy"></i> Tambah Pelajaran Baru
+                </h3>
+                <button type="button" onclick="closeAddScheduleModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="scheduleForm" onsubmit="saveSchedule(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Hari</label>
+                    <select id="scheduleDay" class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-schoolNavy">
+                        <option value="Senin">Senin</option>
+                        <option value="Selasa">Selasa</option>
+                        <option value="Rabu">Rabu</option>
+                        <option value="Kamis">Kamis</option>
+                        <option value="Jumat">Jumat</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Mata Pelajaran</label>
+                    <input type="text" id="scheduleSubject" required placeholder="Contoh: Matematika, Fisika..." class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-schoolNavy">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Jam Mulai</label>
+                        <input type="time" id="scheduleStart" required class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Jam Selesai</label>
+                        <input type="time" id="scheduleEnd" required class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-3 flex gap-2 justify-end">
+                    <button type="button" onclick="closeAddScheduleModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-schoolNavy hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition shadow-sm">
+                        Simpan Mapel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: TAMBAH TUGAS / PR -->
+    <div id="taskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-schoolGold"></i> Buat Pengingat Tugas / PR
+                </h3>
+                <button type="button" onclick="closeAddTaskModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="taskForm" onsubmit="saveTask(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Kategori Pengingat</label>
+                    <select id="taskCategory" class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-schoolNavy">
+                        <option value="PR">PR Besok</option>
+                        <option value="Ulangan">Ulangan / Ujian</option>
+                        <option value="Tugas">Tugas / Deadline Laporan</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Judul / Deskripsi Singkat</label>
+                    <input type="text" id="taskTitle" required placeholder="Contoh: Kerjakan Hal 45 No 1-10" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-schoolNavy">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Mata Pelajaran</label>
+                    <input type="text" id="taskSubject" required placeholder="Contoh: Biologi, Sejarah..." class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-schoolNavy">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Deadline</label>
+                    <input type="date" id="taskDueDate" required class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none">
+                </div>
+
+                <div class="pt-3 flex gap-2 justify-end">
+                    <button type="button" onclick="closeAddTaskModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-schoolNavy hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition shadow-sm">
+                        Simpan Pengingat
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LOGIKA SKRIP APLIKASI -->
+    <script>
+        // Data State
+        let tasks = JSON.parse(localStorage.getItem('studybell_tasks') || '[]');
+        let schedules = JSON.parse(localStorage.getItem('studybell_schedules') || '[]');
+        let notes = JSON.parse(localStorage.getItem('studybell_notes') || '[]');
+
+        let timerInterval = null;
+        let timerSeconds = 25 * 60;
+        let isTimerRunning = false;
+        let currentTaskFilter = 'all';
+
+        // Toast Notification System
+        window.showToast = function(msg, iconName = 'bell') {
+            const toast = document.getElementById('toastNotification');
+            const toastMsg = document.getElementById('toastMessage');
+            if (!toast || !toastMsg) return;
+
+            toastMsg.innerText = msg;
+            toast.classList.remove('-translate-y-[200%]');
+            toast.classList.add('translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0');
+                toast.classList.add('-translate-y-[200%]');
+            }, 3000);
+        };
+
+        // Initialize App on Load
+        window.onload = function() {
+            lucide.createIcons();
+
+            const taskDueDateInput = document.getElementById('taskDueDate');
+            if (taskDueDateInput) {
+                taskDueDateInput.value = new Date().toISOString().split('T')[0];
+            }
+
+            renderTasks();
+            renderSchedules();
+            renderNotes();
+            renderDashboard();
+            initCharts();
+            initCanvas();
+        };
+
+        function saveData() {
+            localStorage.setItem('studybell_tasks', JSON.stringify(tasks));
+            localStorage.setItem('studybell_schedules', JSON.stringify(schedules));
+            localStorage.setItem('studybell_notes', JSON.stringify(notes));
+        }
+
+        // Modal Controls
+        window.closeAddTaskModal = () => document.getElementById('taskModal').classList.add('hidden');
+        window.closeAddScheduleModal = () => document.getElementById('scheduleModal').classList.add('hidden');
+        window.openAddTaskModal = () => document.getElementById('taskModal').classList.remove('hidden');
+        window.openAddScheduleModal = () => document.getElementById('scheduleModal').classList.remove('hidden');
+
+        // CRUD Operations - Schedules
+        window.saveSchedule = function(e) {
+            e.preventDefault();
+            const day = document.getElementById('scheduleDay').value;
+            const subject = document.getElementById('scheduleSubject').value.trim();
+            const start = document.getElementById('scheduleStart').value;
+            const end = document.getElementById('scheduleEnd').value;
+
+            if (!subject || !start || !end) return;
+
+            const newSchedule = { id: Date.now().toString(), day, subject, start, end };
+            schedules.push(newSchedule);
+            saveData();
+
+            renderSchedules();
+            renderDashboard();
+            closeAddScheduleModal();
+            document.getElementById('scheduleForm').reset();
+            showToast('Mata pelajaran berhasil ditambahkan!');
+        };
+
+        window.deleteSchedule = function(id) {
+            schedules = schedules.filter(s => s.id !== id);
+            saveData();
+            renderSchedules();
+            renderDashboard();
+            showToast('Jadwal pelajaran berhasil dihapus!');
+        };
+
+        // CRUD Operations - Tasks
+        window.saveTask = function(e) {
+            e.preventDefault();
+            const title = document.getElementById('taskTitle').value.trim();
+            const category = document.getElementById('taskCategory').value;
+            const subject = document.getElementById('taskSubject').value.trim();
+            const dueDate = document.getElementById('taskDueDate').value;
+
+            if (!title || !subject || !dueDate) return;
+
+            const newTask = { id: Date.now().toString(), title, category, subject, dueDate, completed: false };
+            tasks.push(newTask);
+            saveData();
+
+            renderTasks();
+            renderDashboard();
+            initCharts();
+            closeAddTaskModal();
+            document.getElementById('taskForm').reset();
+            showToast('Pengingat tugas berhasil disimpan!');
+        };
+
+        window.toggleTaskComplete = function(id) {
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+            task.completed = !task.completed;
+            saveData();
+
+            renderTasks();
+            renderDashboard();
+            initCharts();
+            showToast(task.completed ? 'Tugas ditandai selesai! 🎉' : 'Status tugas diperbarui');
+        };
+
+        window.deleteTask = function(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveData();
+            renderTasks();
+            renderDashboard();
+            initCharts();
+            showToast('Tugas berhasil dihapus!');
+        };
+
+        // CRUD Operations - Notes
+        window.saveNote = function() {
+            const title = document.getElementById('noteTitle').value.trim();
+            const content = document.getElementById('noteContent').value.trim();
+
+            if (!title || !content) {
+                showToast('Silakan isi judul dan isi catatan!');
+                return;
+            }
+
+            const newNote = {
+                id: Date.now().toString(),
+                title,
+                content,
+                date: new Date().toLocaleDateString('id-ID')
+            };
+
+            notes.push(newNote);
+            saveData();
+            renderNotes();
+
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteContent').value = '';
+            showToast('Catatan tersimpan!');
+        };
+
+        window.deleteNote = function(id) {
+            notes = notes.filter(n => n.id !== id);
+            saveData();
+            renderNotes();
+            showToast('Catatan dihapus!');
+        };
+
+        // Render Functions
+        function renderSchedules() {
+            const grid = document.getElementById('weeklyScheduleGrid');
+            if (!grid) return;
+
+            const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+
+            grid.innerHTML = days.map(day => {
+                const daySchedules = schedules.filter(s => s.day === day);
+                return `
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col h-full shadow-sm">
+                        <div class="font-bold text-slate-800 text-sm pb-2 mb-3 border-b border-slate-100 flex justify-between items-center">
+                            <span>${day}</span>
+                            <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold">${daySchedules.length} Mapel</span>
+                        </div>
+                        <div class="space-y-2 flex-grow">
+                            ${daySchedules.length === 0 ? '<p class="text-xs text-slate-400 py-4 text-center">Belum ada mapel</p>' : 
+                                daySchedules.map(s => `
+                                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex justify-between items-center group">
+                                        <div>
+                                            <div class="font-bold text-xs text-slate-800">${s.subject}</div>
+                                            <div class="text-[10px] text-slate-500 font-mono">${s.start} - ${s.end}</div>
+                                        </div>
+                                        <button onclick="deleteSchedule('${s.id}')" class="text-slate-400 hover:text-red-500 p-1 transition rounded hover:bg-red-50" title="Hapus Mapel">
+                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+                                `).join('')
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        window.filterTasks = function(category, e) {
+            currentTaskFilter = category;
+            document.querySelectorAll('.task-filter').forEach(btn => {
+                btn.classList.remove('bg-slate-200', 'text-slate-800');
+                btn.classList.add('text-slate-600');
+            });
+            if (e && e.target) {
+                e.target.classList.add('bg-slate-200', 'text-slate-800');
+            }
+            renderTasks();
+        };
+
+        function renderTasks() {
+            const container = document.getElementById('tasksContainer');
+            if (!container) return;
+
+            let filtered = tasks;
+            if (currentTaskFilter !== 'all') {
+                filtered = tasks.filter(t => t.category === currentTaskFilter);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 text-sm">Belum ada tugas atau pengingat tersimpan.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(t => `
+                <div class="bg-white p-4 rounded-2xl border ${t.completed ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'} shadow-sm flex flex-col justify-between space-y-3">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${t.category === 'Ulangan' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-schoolNavy'}">
+                                ${t.category}
+                            </span>
+                            <button onclick="deleteTask('${t.id}')" class="text-slate-400 hover:text-red-500 p-1 transition rounded hover:bg-red-50" title="Hapus Tugas">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <h3 class="font-bold text-slate-800 text-sm ${t.completed ? 'line-through text-slate-400' : ''}">${t.title}</h3>
+                        <p class="text-xs text-slate-500 mt-1">Mata Pelajaran: <span class="font-semibold text-slate-700">${t.subject}</span></p>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <div class="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> ${t.dueDate}
+                        </div>
+                        <button onclick="toggleTaskComplete('${t.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${t.completed ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+                            ${t.completed ? '✓ Selesai' : 'Selesai'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderNotes() {
+            const list = document.getElementById('notesSavedList');
+            if (!list) return;
+
+            if (notes.length === 0) {
+                list.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Belum ada catatan tersimpan.</p>';
+                return;
+            }
+
+            list.innerHTML = notes.map(n => `
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-start">
+                    <div>
+                        <h4 class="font-bold text-xs text-slate-800">${n.title}</h4>
+                        <p class="text-xs text-slate-600 mt-1 whitespace-pre-wrap">${n.content}</p>
+                        <span class="text-[10px] text-slate-400 mt-2 block">${n.date}</span>
+                    </div>
+                    <button onclick="deleteNote('${n.id}')" class="text-slate-400 hover:text-red-500 p-1 transition rounded hover:bg-red-50" title="Hapus Catatan">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function renderDashboard() {
+            const daysMap = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const todayName = daysMap[new Date().getDay()];
+            const dayBadge = document.getElementById('currentDayBadge');
+            if (dayBadge) dayBadge.innerText = todayName;
+
+            const todaySchedules = schedules.filter(s => s.day === todayName);
+            const scheduleContainer = document.getElementById('dashScheduleList');
+
+            if (scheduleContainer) {
+                if (todaySchedules.length === 0) {
+                    scheduleContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">Tidak ada jadwal pelajaran untuk hari ${todayName}.</p>`;
+                } else {
+                    scheduleContainer.innerHTML = todaySchedules.map(s => `
+                        <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                            <div>
+                                <div class="font-bold text-xs text-slate-800">${s.subject}</div>
+                                <div class="text-[10px] text-slate-500 font-mono">${s.start} - ${s.end}</div>
+                            </div>
+                            <span class="text-[10px] bg-blue-100 text-schoolNavy font-bold px-2 py-0.5 rounded-full">Kelas 10</span>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            const pendingTasks = tasks.filter(t => !t.completed);
+            const taskContainer = document.getElementById('dashTaskList');
+
+            if (taskContainer) {
+                if (pendingTasks.length === 0) {
+                    taskContainer.innerHTML = `<p class="text-xs text-amber-900/60 text-center py-6 font-medium col-span-full">Belum ada PR atau Ulangan tersimpan.</p>`;
+                    document.getElementById('dashNextDeadline').innerText = 'Tidak ada deadline terdekat';
+                } else {
+                    taskContainer.innerHTML = pendingTasks.slice(0, 4).map(t => `
+                        <div class="bg-amber-100/90 p-3 rounded-xl border border-amber-300/80 shadow-sm flex items-center justify-between">
+                            <div class="overflow-hidden">
+                                <span class="text-[9px] bg-amber-800 text-amber-100 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">${t.category}</span>
+                                <h4 class="font-bold text-xs text-amber-950 truncate mt-1">${t.title}</h4>
+                                <p class="text-[10px] text-amber-800 mt-0.5">${t.subject} • Deadline: ${t.dueDate}</p>
+                            </div>
+                            <button onclick="toggleTaskComplete('${t.id}')" class="text-xs bg-amber-200 hover:bg-amber-300 text-amber-950 px-2 py-1 rounded-lg font-bold transition whitespace-nowrap ml-2">
+                                Selesai
+                            </button>
+                        </div>
+                    `).join('');
+
+                    document.getElementById('dashNextDeadline').innerText = `${pendingTasks[0].title} (${pendingTasks[0].dueDate})`;
+                }
+            }
+        }
+
+        // Navigation Tab Switching
+        window.switchTab = function(tabName) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            const activeSection = document.getElementById(`view-${tabName}`);
+            if (activeSection) activeSection.classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-schoolNavy', 'text-schoolNavy');
+                btn.classList.add('border-transparent', 'text-slate-600');
+            });
+
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-slate-600');
+                activeBtn.classList.add('border-schoolNavy', 'text-schoolNavy');
+            }
+
+            if (tabName === 'notes') {
+                setTimeout(initCanvas, 100);
+            }
+
+            if (tabName === 'reports') {
+                initCharts();
+            }
+        };
+
+        // Canvas Sketch Pad
+        let canvas, ctx, isDrawing = false;
+        function initCanvas() {
+            canvas = document.getElementById('sketchCanvas');
+            if (!canvas) return;
+            ctx = canvas.getContext('2d');
+
+            function resizeCanvas() {
+                const rect = canvas.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    canvas.width = rect.width;
+                    canvas.height = rect.height;
+                }
+            }
+            resizeCanvas();
+
+            canvas.onmousedown = startDrawing;
+            canvas.onmousemove = draw;
+            canvas.onmouseup = stopDrawing;
+            canvas.onmouseleave = stopDrawing;
+
+            canvas.ontouchstart = (e) => {
+                e.preventDefault();
+                startDrawing(e.touches[0]);
+            };
+            canvas.ontouchmove = (e) => {
+                e.preventDefault();
+                draw(e.touches[0]);
+            };
+            canvas.ontouchend = stopDrawing;
+        }
+
+        function startDrawing(e) {
+            if (!ctx) return;
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function draw(e) {
+            if (!isDrawing || !ctx) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = document.getElementById('sketchColor').value || '#1e3a8a';
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+        }
+
+        function stopDrawing() { isDrawing = false; }
+        window.clearCanvas = function() {
+            if (ctx && canvas) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                showToast('Sketsa dibersihkan!');
+            }
+        };
+
+        // Analytics Charts
+        let taskChart;
+        function initCharts() {
+            const ctxTask = document.getElementById('chartTaskStatus');
+            if (!ctxTask) return;
+
+            if (taskChart) taskChart.destroy();
+
+            const completedCount = tasks.filter(t => t.completed).length;
+            const pendingCount = tasks.length - completedCount;
+
+            taskChart = new Chart(ctxTask, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Selesai', 'Belum Selesai'],
+                    datasets: [{
+                        data: [completedCount, pendingCount],
+                        backgroundColor: ['#10b981', '#f59e0b']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        window.toggleQuest = function(questNum) {
+            showToast(`Misi ${questNum} diperbarui! XP bertambah! 🎉`);
+        };
+
+        // Timer & Bel Audio
+        window.toggleTimer = function() {
+            const btn = document.getElementById('btnStartTimer');
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                btn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i> Mulai Belajar`;
+                btn.className = "flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-md text-sm";
+            } else {
+                isTimerRunning = true;
+                btn.innerHTML = `<i data-lucide="pause" class="w-4 h-4"></i> Jeda Timer`;
+                btn.className = "flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-md text-sm";
+                timerInterval = setInterval(updateTimer, 1000);
+            }
+            lucide.createIcons();
+        };
+
+        function updateTimer() {
+            if (timerSeconds <= 0) {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                playSchoolBellSound();
+                showToast('🔔 Waktu Belajar Selesai! Bel sekolah telah berbunyi.');
+                resetTimer();
+                return;
+            }
+            timerSeconds--;
+            const minutes = Math.floor(timerSeconds / 60);
+            const seconds = timerSeconds % 60;
+            document.getElementById('timerDisplay').innerText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        window.resetTimer = function() {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            timerSeconds = 25 * 60;
+            document.getElementById('timerDisplay').innerText = "25:00";
+            const btn = document.getElementById('btnStartTimer');
+            btn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i> Mulai Belajar`;
+            btn.className = "flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-md text-sm";
+            lucide.createIcons();
+        };
+
+        window.playSchoolBellSound = function() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = audioCtx.currentTime;
+
+                for (let i = 0; i < 3; i++) {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880 + (i * 220), now + (i * 0.4));
+                    gain.gain.setValueAtTime(0.3, now + (i * 0.4));
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.4) + 0.8);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + (i * 0.4));
+                    osc.stop(now + (i * 0.4) + 0.8);
+                }
+            } catch(e) {
+                console.log('Audio Context tidak dapat diputar.');
+            }
+        };
+    </script>
+</body>
+</html>
+```
