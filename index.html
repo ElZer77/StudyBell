@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBell 🔔 - Pengingat Belajar SMA Kelas 10</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        schoolNavy: '#1e3a8a',
+                        schoolGold: '#f59e0b',
+                        chalkboard: '#1b382b',
+                        chalkGreen: '#2d5a44',
+                        chalkYellow: '#fef08a',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Kalam:wght@700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .handwriting { font-family: 'Kalam', cursive; }
+        .chalkboard-texture {
+            background-color: #1b382b;
+            background-image: radial-gradient(#2d5a44 1px, transparent 0);
+            background-size: 16px 16px;
+        }
+        .corkboard {
+            background-color: #d97706;
+            background-image: radial-gradient(#b45309 2px, transparent 0);
+            background-size: 12px 12px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- CUSTOM TOAST NOTIFICATION -->
+    <div id="toastNotification" class="fixed top-5 right-5 z-50 transform -translate-y-[200%] transition-transform duration-300 ease-in-out bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 pointer-events-none">
+        <i data-lucide="bell" id="toastIcon" class="w-5 h-5 text-schoolGold animate-bounce"></i>
+        <span id="toastMessage" class="text-sm font-semibold">Notifikasi</span>
+    </div>
+
+    <!-- MAIN NAVBAR -->
+    <header class="bg-schoolNavy text-white shadow-md border-b-4 border-schoolGold sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-schoolGold p-2 rounded-2xl text-slate-900 shadow-inner">
+                    <i data-lucide="bell" class="w-7 h-7 fill-current"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-wide flex items-center gap-2">
+                        StudyBell <span class="text-xs bg-schoolGold text-slate-900 px-2.5 py-0.5 rounded-full font-extrabold uppercase tracking-wider">Kelas 10</span>
+                    </h1>
+                    <p class="text-xs text-blue-200 hidden sm:block">Organisator Belajar & Pengingat Tugas Sekolah</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-400/40 px-3 py-1.5 rounded-full text-xs font-bold" title="Streak Belajar Harian">
+                    <i data-lucide="flame" class="w-4 h-4 text-amber-400 fill-amber-400"></i>
+                    <span id="userStreak">1 Hari Streak</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="bg-white border-b border-slate-200 sticky top-[65px] z-20 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 flex gap-2 overflow-x-auto scrollbar-none py-1">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-schoolNavy text-schoolNavy flex items-center gap-2 whitespace-nowrap transition">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Mading & Utama
+            </button>
+            <button onclick="switchTab('schedule')" id="tab-schedule" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-schoolNavy flex items-center gap-2 whitespace-nowrap transition">
+                <i data-lucide="calendar" class="w-4 h-4"></i> Jadwal Pelajaran
+            </button>
+            <button onclick="switchTab('tasks')" id="tab-tasks" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-schoolNavy flex items-center gap-2 whitespace-nowrap transition">
+                <i data-lucide="check-square" class="w-4 h-4"></i> Tugas & PR
+            </button>
+            <button onclick="switchTab('study')" id="tab-study" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-schoolNavy flex items-center gap-2 whitespace-nowrap transition">
+                <i data-lucide="timer" class="w-4 h-4"></i> Bel Sekolah & Fokus
+            </button>
+            <button onclick="switchTab('notes')" id="tab-notes" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-schoolNavy flex items-center gap-2 whitespace-nowrap transition">
+                <i data-lucide="pen-tool" class="w-4 h-4"></i> Catatan & Sketsa
+            </button>
+            <button onclick="switchTab('reports')" id="tab-reports" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-schoolNavy flex items-center gap-2 whitespace-nowrap transition">
+                <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Laporan Belajar
+            </button>
+        </div>
+    </nav>
+
+    <!-- CONTENT BODY -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- 1. DASHBOARD VIEW -->
+        <section id="view-dashboard" class="space-y-6">
+            <!-- Papan Tulis Header -->
+            <div class="chalkboard-texture rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl border-4 border-amber-900/60">
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 bg-emerald-800/80 text-emerald-200 px-3 py-1 rounded-full text-xs font-semibold mb-2 border border-emerald-600">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Ringkasan Belajar Hari Ini
+                        </div>
+                        <h2 class="text-3xl sm:text-4xl font-bold text-chalkYellow tracking-wide handwriting">Selamat Belajar, Siswa Kelas 10! 👋</h2>
+                        <p class="text-emerald-100 mt-2 max-w-xl text-sm sm:text-base">
+                            "Pendidikan adalah senjata paling mematikan di dunia, karena dengan pendidikan Anda dapat mengubah dunia."
+                        </p>
+                    </div>
+
+                    <div class="bg-chalkGreen/90 p-4 rounded-2xl border border-emerald-500/30 flex items-center gap-4 shadow-lg min-w-[240px]">
+                        <div class="p-3 bg-schoolGold rounded-xl text-slate-900 animate-bounce">
+                            <i data-lucide="bell" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-emerald-200">Pengingat Terdekat</div>
+                            <div id="dashNextDeadline" class="font-bold text-white text-sm mt-0.5">Tidak ada deadline terdekat</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Konten Dashboard -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Jadwal Hari Ini -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i data-lucide="book-open" class="w-5 h-5 text-schoolNavy"></i> Mapel Hari Ini
+                            </h3>
+                            <span id="currentDayBadge" class="text-xs font-bold bg-blue-100 text-schoolNavy px-2.5 py-1 rounded-full">Hari Ini</span>
+                        </div>
+                        <div id="dashScheduleList" class="space-y-2.5">
+                            <p class="text-xs text-slate-400 text-center py-6">Tidak ada jadwal pelajaran untuk hari ini.</p>
+                        </div>
+                    </div>
+                    <button onclick="switchTab('schedule')" class="mt-4 text-xs font-bold text-schoolNavy hover:underline flex items-center justify-center gap-1 w-full pt-3 border-t border-slate-100">
+                        Lihat Semua Jadwal <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Corkboard Mading PR & Ulangan -->
+                <div class="corkboard p-5 rounded-2xl shadow-md border-4 border-amber-900/40 md:col-span-2 relative text-amber-950">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-amber-800/30">
+                        <h3 class="font-bold text-lg flex items-center gap-2 text-amber-950 font-sans">
+                            <i data-lucide="pin" class="w-5 h-5 text-red-600 fill-red-600"></i> Mading PR & Ulangan
+                        </h3>
+                        <button onclick="openAddTaskModal()" class="px-3 py-1.5 bg-amber-900 hover:bg-amber-950 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow transition">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Tambah Pengingat
+                        </button>
+                    </div>
+
+                    <div id="dashTaskList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <p class="text-xs text-amber-900/60 text-center py-6 font-medium col-span-full">Belum ada PR atau Ulangan. Klik tombol Tambah untuk membuat pengingat!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. JADWAL PELAJARAN VIEW -->
+        <section id="view-schedule" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-5 h-5 text-schoolNavy"></i> Jadwal Pelajaran Mingguan
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">Atur mata pelajaran harianmu dari Senin sampai Jumat</p>
+                </div>
+                <button onclick="openAddScheduleModal()" class="px-4 py-2 bg-schoolNavy text-white font-bold rounded-xl hover:bg-blue-900 transition flex items-center gap-2 text-xs shadow-md w-fit">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Tambah Pelajaran
+                </button>
+            </div>
+
+            <!-- Grid Hari Pelajaran -->
+            <div id="weeklyScheduleGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- Javascript rendered -->
+            </div>
+        </section>
+
+        <!-- 3. TUGAS & PR VIEW -->
+        <section id="view-tasks" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="check-square" class="w-5 h-5 text-schoolNavy"></i> Daftar Tugas & Ulangan
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">Kelola tugas PR, persiapan ulangan, dan laporan harian</p>
+                </div>
+                <button onclick="openAddTaskModal()" class="px-4 py-2 bg-schoolNavy text-white font-bold rounded-xl hover:bg-blue-900 transition flex items-center gap-2 text-xs shadow-md w-fit">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Tambah Tugas Baru
+                </button>
+            </div>
+
+            <div class="flex gap-2 overflow-x-auto pb-1">
+                <button onclick="filterTasks('all', event)" class="task-filter px-3 py-1.5 rounded-full text-xs font-bold bg-slate-200 text-slate-800 transition">Semua</button>
+                <button onclick="filterTasks('PR', event)" class="task-filter px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:bg-slate-200 transition">PR Besok</button>
+                <button onclick="filterTasks('Ulangan', event)" class="task-filter px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:bg-slate-200 transition">Ulangan</button>
+                <button onclick="filterTasks('Tugas', event)" class="task-filter px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:bg-slate-200 transition">Tugas Biasa</button>
+            </div>
+
+            <div id="tasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- 4. BEL SEKOALAH & TIMER FOKUS VIEW -->
+        <section id="view-study" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Timer Pomodoro Belajar -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center justify-between">
+                    <div class="w-full">
+                        <div class="inline-flex items-center gap-2 bg-blue-50 text-schoolNavy px-3 py-1 rounded-full text-xs font-bold border border-blue-200 mb-4">
+                            <i data-lucide="clock" class="w-4 h-4"></i> Timer Sesi Belajar
+                        </div>
+                        <h3 class="font-bold text-slate-800 text-lg">Waktu Belajar Fokus</h3>
+                        <p class="text-xs text-slate-500 mt-1">Bel sekolah akan berbunyi otomatis saat waktu habis!</p>
+                    </div>
+
+                    <div class="my-8">
+                        <div id="timerDisplay" class="text-6xl font-extrabold text-schoolNavy font-mono tracking-tight">25:00</div>
+                    </div>
+
+                    <div class="flex items-center gap-3 w-full max-w-xs">
+                        <button onclick="toggleTimer()" id="btnStartTimer" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-md text-sm">
+                            <i data-lucide="play" class="w-4 h-4"></i> Mulai Belajar
+                        </button>
+                        <button onclick="resetTimer()" class="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition shadow-sm" title="Reset Timer">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Suara Bel Sekolah & Pengingat -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i data-lucide="bell-ring" class="w-5 h-5 text-schoolGold"></i> Simulasi Bel Sekolah
+                            </h3>
+                            <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">Audio Synthesizer</span>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed mb-6">
+                            Gunakan bel otomatis ini untuk menandai waktu mulai belajar, istirahat, atau pengingat ganti mata pelajaran mandiri.
+                        </p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button onclick="playSchoolBellSound()" class="w-full py-3 bg-schoolGold hover:bg-amber-500 text-slate-900 font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-md text-sm">
+                            <i data-lucide="volume-2" class="w-5 h-5"></i> Bunyikan Bel Sekolah Sekarang 🔔
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. CATATAN & BOARD SKETSA VIEW -->
+        <section id="view-notes" class="hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Quick Notes Text -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+                            <i data-lucide="file-text" class="w-5 h-5 text-schoolNavy"></i> Catatan Cepat
+                        </h3>
+                        <div class="space-y-3">
+                            <input type="text" id="noteTitle" placeholder="Judul Catatan..." class="w-full text-xs font-bold p-3 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none focus:border-schoolNavy">
+                            <textarea id="noteContent" rows="4" placeholder="Tuliskan materi ringkas, rumus, atau pengingat..." class="w-full text-xs p-3 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none focus:border-schoolNavy"></textarea>
+                            <button onclick="saveNote()" class="px-4 py-2 bg-schoolNavy text-white font-bold rounded-xl text-xs hover:bg-blue-900 transition flex items-center gap-1 shadow-sm">
+                                <i data-lucide="save" class="w-4 h-4"></i> Simpan Catatan
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <h4 class="text-xs font-bold text-slate-700 mb-2">Daftar Catatan Tersimpan:</h4>
+                        <div id="notesSavedList" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            <!-- Rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Papan Coretan & Sketsa (Sketch Canvas) -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i data-lucide="pen-tool" class="w-5 h-5 text-schoolNavy"></i> Papan Sketsa Coretan Rumus
+                            </h3>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="sketchColor" value="#1e3a8a" class="w-7 h-7 rounded cursor-pointer border-0">
+                                <button onclick="clearCanvas()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                                    <i data-lucide="eraser" class="w-3.5 h-3.5"></i> Bersihkan
+                                </button>
+         
